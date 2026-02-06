@@ -1,0 +1,52 @@
+@startuml
+skinparam Style strictuml
+skinparam sequenceMessageAlign center
+
+actor "User (React App)" as UI
+participant "API Gateway\n(Spring Cloud)" as GW <<Infrastructure>>
+participant "Auth Service\n(Spring Security)" as Auth <<Service>>
+participant "User Service" as UserSvc <<Service>>
+database "User DB\n(PostgreSQL)" as DB <<Database>>
+database "Session Store\n(Redis)" as Redis <<Cache>>
+
+== Authentication (Login) ==
+
+UI -> GW : POST /auth/login\n(credentials)
+GW -> Auth : Forward Login Request
+
+Auth -> UserSvc : Get User by Username
+UserSvc -> DB : SELECT user WHERE username=?
+DB --> UserSvc : User Profile + Hashed Pwd
+UserSvc --> Auth : User Details
+
+alt #LightGreen Successful Login
+    Auth -> Auth : Verify Password Hash
+    Auth -> Redis : SET session:<id> (TTL 24h)
+    Auth -> Auth : Sign JWT (with session_id)
+    Auth --> GW : 200 OK + JWT
+    GW --> UI : 200 OK + JWT
+else #Pink Invalid Credentials
+    Auth --> GW : 401 Unauthorized
+    GW --> UI : 401 Unauthorized
+end
+
+== Authorization (Subsequent Request) ==
+
+UI -> GW : GET /api/workouts\n(Header: Bearer JWT)
+
+group #LightBlue Request Validation
+    GW -> GW : Validate JWT Signature
+    GW -> Redis : GET session:<id>
+    
+    alt #White Session Valid
+        Redis --> GW : Session Data
+        GW -> GW : Add Header X-User-ID
+    else #Pink Session Expired/Revoked
+        Redis --> GW : null
+        GW --> UI : 403 Forbidden
+    end
+end
+
+GW -> "Workout Service" : GET /workouts (X-User-ID: 123)
+...
+@enduml

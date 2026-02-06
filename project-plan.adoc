@@ -1,0 +1,64 @@
+[cols="1,3,4,2,1", options="header"]
+|===
+| No. | Description | Learnings | Artifact | Status
+
+| 1
+| *Architecture Diagram*
+| High level design, event driven architecture
+| Architecture diagram link
+| DONE
+
+| 2
+| *Localstack setup*
+| SNS, SQS
+| localstack-setup.sh
+| DONE
+
+| 3
+| *Database Setup*
+| SQL refresher
+| TBD
+| TODO
+
+| 4
+| *Workout Manager Service*
+| Java spring boot refresher, database design, push to SNS
+| docs/workout-manager-service
+| TODO
+
+| 5
+| *User Service*
+| Spring boot refresher
+| TBD
+| TODO
+
+| 6
+| *User Authentication*
+| Spring security
+| docs/user-authentication
+| TODO
+
+| 7
+| *AI Services*
+| python, AI integration, sqs integration
+| docs/ai-services
+| TODO
+
+| 8
+| *Notification Service*
+| spring boot refresher, sse, sqs integration
+| docs/notification-service
+| TODO
+
+| 9
+| *Discovery Service + API Gateway*
+| kubernetes, spring cloud gateway
+| docs/microservice-routing
+| TODO
+
+| 10
+| *Cloud Deployment plan*
+| serverless
+| docs/cloud-deployment
+| TODO
+|===

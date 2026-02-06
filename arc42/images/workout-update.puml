@@ -1,0 +1,67 @@
+@startuml
+title Workout Completion and Analysis Flow
+
+' Tier 1: External & Entry
+participant "Client" as C
+participant "API Gateway" as APIG
+
+' Tier 2: Core Domain
+participant "Workout Management Service" as WS
+database "Workout DB" as WDB
+
+' Tier 3: Async Infrastructure
+participant "Workout.Domain.Events (SNS)" as SNS
+participant "Workout Analytics Queue (SQS)" as AQ
+participant "Notification Queue (SQS)" as NQ
+
+' Tier 4: Downstream Consumers
+participant "Workout Analytics Service" as AS
+participant "Notification Service" as NS
+participant "Notification DB" as NDB
+
+== Synchronous Request/Response ==
+
+C -> APIG : POST /api/workouts
+APIG -> WS : Forward Request
+
+alt DB Success
+    WS -> WDB : Persist Workout Record
+
+    opt status == "COMPLETED"
+        WS -> SNS : Emit 'WorkoutCompleted' {action: "process"}
+    end
+    
+    WS --> APIG : 200/201 Success
+    APIG --> C : Success
+else DB Failure
+    WS --> APIG : 500 Error
+    APIG --> C : Error
+end
+
+== Async Processing ==
+
+SNS -> AQ : Filter match: action == "process"
+AQ -> AS : Consume 'WorkoutCompleted' Event
+
+alt AI Analysis Success
+    AS -> NQ : Emit 'AnalysisResult'
+else AI Failure
+    AQ -> AQ : [Internal] Move to Analysis-DLQ
+end
+
+NQ -> NS : Consume 'AnalysisResult'
+alt Notification Success
+    NS -> NDB : Store Notification Data
+    note right: Persist with status "UNREAD"
+
+    NS ->> C: **SSE: "Anaylsis Complete"**
+
+    group UI Data Sync (Pull-based)
+        C -> NS: GET /api/notifications
+        NS --> C: Return Notification List
+    end
+else Notification Failure
+    NQ -> NQ : [Internal] Move to Notification-DLQ
+end
+
+@enduml

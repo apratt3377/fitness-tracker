@@ -1,0 +1,27 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[[section-architecture-constraints]]
+== Architecture Constraints
+
+=== Technical Constraints
+
+Architecture constraints for fitness-tracker:
+
+* solution will run on docker containers, managed by kubernetes
+* kubernetes cluster is required to use kubernetes discovery service
+* spring boot services will use maven build tool
+* AI service will be written in python
+* event driven architecture using SNS and SQS, emulated locally with localstack
+* built as cloud native application, deployable to AWS
+
+=== Organizational Constraints
+
+* developed by solo developer as learning project
+* Testing goal of 70% code coverage
+* timeline is 3 months, beginning Feb 2026
+* published under liberal open-source license
+
+=== Conventions
+
+* Architecture documentation based on arc42-Template
+* Java, python coding conventions
