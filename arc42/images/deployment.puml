@@ -1,0 +1,56 @@
+@startuml
+skinparam backgroundColor #fdfdfd
+skinparam shadowing false
+skinparam node {
+    BackgroundColor #f5f5f5
+    BorderColor #333333
+}
+
+header arc42 Section 7 - Local Microservices View
+
+node "Developer Machine" <<Device>> as host {
+
+    node "Docker Desktop / Engine" <<ExecutionEnvironment>> as docker {
+        
+        ' API Gateway / Entry Point
+        node "Gateway Container" <<ExecutionEnvironment>> as gw_node {
+            artifact "API Gateway (Nginx/Spring Cloud)" as gateway
+        }
+
+        ' Microservices Group
+        package "Business Services" {
+            node "Order Service Container" <<ExecutionEnvironment>> as order_node {
+                artifact "Order Service (.jar)" as order_svc
+            }
+            
+            node "Payment Service Container" <<ExecutionEnvironment>> as payment_node {
+                artifact "Payment Service (.js)" as payment_svc
+            }
+            
+            node "Catalog Service Container" <<ExecutionEnvironment>> as catalog_node {
+                artifact "Catalog Service (.go)" as catalog_svc
+            }
+        }
+
+        ' Data Layer
+        node "Shared DB Container" <<ExecutionEnvironment>> as db_node {
+            database "PostgreSQL" as db
+        }
+        
+        node "Message Broker" <<ExecutionEnvironment>> as rabbit_node {
+            queue "RabbitMQ" as event_bus
+        }
+    }
+}
+
+' Communication paths
+gateway -down-> order_svc : REST/JSON
+gateway -down-> catalog_svc : REST/JSON
+
+order_svc -right-> event_bus : Publish OrderCreated
+payment_svc <-left- event_bus : Subscribe
+
+order_svc -down-> db : SQL/5432
+payment_svc -down-> db : SQL/5432
+
+@enduml

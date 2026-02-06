@@ -1,0 +1,17 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[[section-solution-strategy]]
+== Solution Strategy
+
+
+Microservices - goal is to learn about microservice architecture and best practices
+Spring boot - goal is a refresher on java and spring boot features
+python for AI services - goal is to learn python and AI integration
+Postgresql, mongodb, and redis - different database types for different needs
+JSON over HTTP for frontend backend communication
+Security is not a major focus, but want to perform user authentication and authorization using spring security and JWT
+Event driven architecture using SNS and SQS for inter-service communication
+Docker containers managed by kubernetes
+Deployed as kubernetes cluster
+React frontend SPA
+API Gateway using spring cloud gateway

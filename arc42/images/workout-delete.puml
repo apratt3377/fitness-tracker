@@ -1,0 +1,50 @@
+@startuml
+title Workout Deletion Flow
+
+' Tier 1: External & Entry
+participant "Client" as C
+participant "API Gateway" as APIG
+
+' Tier 2: Core Domain
+participant "Workout Management Service" as WS
+database "Workout DB" as WDB
+
+' Tier 3: Async Infrastructure
+participant "Workout.Domain.Events (SNS)" as WTSNS
+participant "Cleanup Queue (SQS)" as CQ
+
+' Tier 4: Downstream Consumers
+participant "Notification Service" as NS
+participant "Notification DB" as NDB
+
+== Synchronous Request/Response ==
+
+C -> APIG : DELETE /api/workouts/{id}
+APIG -> WS : Forward Request
+
+alt DB Success
+    WS -> WDB : **Mark Inactive (Soft Delete)**
+    
+    WS -> WTSNS : Emit 'WorkoutDeleted' {action: "delete"}
+    
+    WS --> APIG : 200 OK
+    APIG --> C : Success
+else DB Failure
+    WS --> APIG : 500 Error
+    APIG --> C : Error
+end
+
+== Async Processing ==
+
+WTSNS -> CQ : Filter match: action == "delete"
+
+NS -> CQ : Consume 'WorkoutDeleted' Event
+
+alt Cleanup Success
+    NS -> NDB : Mark Notifications as Archived
+    note right: Ensures data consistency for UI
+else Cleanup Failure
+    CQ -> CQ : [Internal] Move to Cleanup-DLQ
+end
+
+@enduml
