@@ -1,23 +1,24 @@
 @startuml
+hide footbox
 title Workout Completion and Analysis Flow
 
 ' Tier 1: External & Entry
-participant "Client" as C
-participant "API Gateway" as APIG
+actor "User (React App)" as C
+participant "API Gateway" as APIG <<Infrastructure>>
 
 ' Tier 2: Core Domain
-participant "Workout Management Service" as WS
-database "Workout DB" as WDB
+participant "Workout Management Service" as WS <<Service>>
+database "Workout DB" as WDB <<Database>>
 
 ' Tier 3: Async Infrastructure
 participant "Workout.Domain.Events (SNS)" as SNS
-participant "Workout Analytics Queue (SQS)" as AQ
-participant "Notification Queue (SQS)" as NQ
+queue "Workout Analytics Queue (SQS)" as AQ
+queue "Notification Queue (SQS)" as NQ
 
 ' Tier 4: Downstream Consumers
-participant "Workout Analytics Service" as AS
-participant "Notification Service" as NS
-participant "Notification DB" as NDB
+participant "Workout Analytics Service" as AS <<Service>>
+participant "Notification Service" as NS <<Service>>
+participant "Notification DB" as NDB <<Database>>
 
 == Synchronous Request/Response ==
 
@@ -31,7 +32,7 @@ alt DB Success
         WS -> SNS : Emit 'WorkoutCompleted' {action: "process"}
     end
     
-    WS --> APIG : 200/201 Success
+    WS --> APIG : 202 Accepted
     APIG --> C : Success
 else DB Failure
     WS --> APIG : 500 Error

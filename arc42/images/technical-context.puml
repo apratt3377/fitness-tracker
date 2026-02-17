@@ -4,17 +4,17 @@ skinparam componentStyle uml2
 header Technical Context
 
 node "Client Device" as client {
-    component "fitnessTracker::web" as web <<SPA>>
+    component "fitness-tracker::web" as web <<SPA>>
 }
 
 node "Local Server" as host {
-    package "fitnessTracker System" {
-        component "fitnessTracker::api" as api
+    package "fitness-tracker System" {
+        component "fitness-tracker::api" as api
     }
 }
 
 ' Specific Gemini Cloud
-cloud "Google AI (Gemini)" as gemini <<external>> #White {
+cloud "Google API (Gemini)" as gemini <<external>> #White {
     component "Gemini 1.5 Flash" as model #LightGray
 }
 
