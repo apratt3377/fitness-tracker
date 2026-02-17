@@ -5,8 +5,8 @@
 queue "Analytics Queue" as aq <<external>>
 queue "Notification Queue" as nq <<external>>
 
-package "Analytics Service Boundary" {
-    component [Queue Listener] as listener
+package "analytics-service Boundary" {
+    component [QueueListener] as listener
     component [AnalyticsService] as service
     component [GeminiClient] as aiClient
     component [MessageProducer] as producer

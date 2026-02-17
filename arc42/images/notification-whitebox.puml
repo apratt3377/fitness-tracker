@@ -14,7 +14,7 @@ queue "Notification Queue" as nq
 queue "Cleanup Queue" as cq
 component "React Frontend" as client <<external>>
 
-package "Notification Service Boundary" {
+package "notification-service Boundary" {
     
     ' This package exists ONLY for layout, it will be invisible
     package "TopRow" <<layout>> {

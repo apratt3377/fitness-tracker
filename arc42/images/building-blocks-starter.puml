@@ -14,7 +14,7 @@ User -[hidden]down-> Admin
 component "Gemini API" as gemini <<external>> #LightGray
 
 ' 4. Define your Internal System with the list format
-package "Fitness Tracker System" #LightBlue {
+package "fitness-tracker System" #LightBlue {
   component ft [
     <b>Internal Microservices</b>
     --

@@ -1,31 +1,33 @@
-ifndef::imagesdir[:imagesdir: ../images]
+ifndef::imagesdir[:imagesdir: ../images/out]
 
 [[section-context-and-scope]]
 == Context and Scope
 
+This section describes who uses {project-name} and what external systems it interacts with.
+
 === Business Context
 
-TODO: diagram with fitness-tracker, user, admin, Recommendation Engine
+image::business-context.svg[]
 
 .User
-A fitness enthusiast uses fitness-tracker to log their strength training workouts and receive AI-generated workout plans.
+A fitness enthusiast uses {project-name} to log their strength training workouts and receive AI-generated workout plans.
 
 .Admin
-An admin manages the list of exercises available to users in the system.
+An admin manages the list of exercises available to users.
 
-.AI model
-TBD: what AI model receives generated prompt
+.AI Engine
+The free Gemini API will be used with developer-authored prompts for each type of supported analytical query (ie to generate a summary of the workout or to provide recommendations for the user's next workout).
 
 
 === Technical Context
 
-TODO: diagram with fitness-tracker::api, fitness-tracker::web, fitness-tracker::mobile, Gemini API
+image::technical-context.svg[]
 
-.Backend (fitness:api)
-The api runs as microservices on docker containers. It exposes REST endpoints over HTTP for the frontend and other clients to interact with. It makes HTTP requests to Gemini REST API.
+.Backend (fitness-tracker::api)
+The backend runs as microservices within a local kubernetes cluster. REST endpoints are exposed over HTTP for the frontend. The backend will make HTTPS requests to the Gemini API using an API Key.
 
-.Frontend (fitness:web)
-The React frontend runs in a web browser. It communicates with the backend over HTTP. It will service both Admin and Users.
+.Frontend (fitness-tracker::web)
+The React frontend runs in a web browser. It communicates with the backend over HTTP. It will service both Admins and Users.
 
-.OpenAI API
-The backend makes HTTP requests to OpenAI's REST API to generate workout analysis and recommendations.
+.Google Gemini API
+The backend makes HTTP requests to Gemini's REST API supplying a prompt along with the workout payload to generate workout analysis and recommendations.

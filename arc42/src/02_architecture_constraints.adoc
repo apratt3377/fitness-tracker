@@ -1,27 +1,38 @@
-ifndef::imagesdir[:imagesdir: ../images]
+ifndef::imagesdir[:imagesdir: ../images/out]
 
 [[section-architecture-constraints]]
 == Architecture Constraints
 
 === Technical Constraints
 
-Architecture constraints for fitness-tracker:
-
-* solution will run on docker containers, managed by kubernetes
-* kubernetes cluster is required to use kubernetes discovery service
-* spring boot services will use maven build tool
-* AI service will be written in python
-* event driven architecture using SNS and SQS, emulated locally with localstack
-* built as cloud native application, deployable to AWS
+.Technical Constraints
+[cols="2,4", options="header"]
+|===
+| Constraint | Goal
+| Java 25 / Maven | Chosen as primary backend language to ensure long term support and high performance. Spring Boot has a mature ecosytem with integrations for spring security and spring cloud, which are critical features of this application.
+| Python 3.12 | Required for the Analytics Service to provide compatibility with ML libraries and AI processing frameworks.
+| LocalStack | Provides AWS SNS/SQS locally without incurring cloud costs.
+| Docker / Kubernetes | Application must be fully functional in local k8s environment. This ensures easy future migration to the cloud.
+|===
 
 === Organizational Constraints
 
-* developed by solo developer as learning project
-* Testing goal of 70% code coverage
-* timeline is 3 months, beginning Feb 2026
-* published under liberal open-source license
+.Organizational Constraints
+[cols="2,4", options="header"]
+|===
+| Constraint | Goal
+| Solo Developer Project | Architecutre must be manageable by one person and require minimal operational overhead.
+| 4 month timeline | Primarily an exploration/MVP project, with options to design for scalability later on.
+| 70% code coverage goal | Testing is paramount. Metric for learning and quality.
+| Licensing | Publish under liberal open source license to encourage learning.
+|===
 
 === Conventions
 
-* Architecture documentation based on arc42-Template
-* Java, python coding conventions
+.Conventions
+[cols="2,4", options="header"]
+|===
+| Convention | Goal
+| Architecture Documentation | arc42 template
+| Coding conventions | https://www.oracle.com/java/technologies/javase/codeconventions-contents.html[Java Conventions] and PEP 8
+|===

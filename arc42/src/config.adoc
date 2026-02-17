@@ -6,5 +6,7 @@
 :toc:
 
 // where are images located?
-:imagesdir: ./images
+:imagesdir: ./images/out
 :arc42help:
+
+:project-name: Fitness Tracker

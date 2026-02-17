@@ -12,7 +12,7 @@ skinparam package<<layout>> {
 ' --- EXTERNAL TOP ---
 component "React Frontend" as client <<external>>
 
-package "Workout Service Boundary" {
+package "workout-management-service Boundary" {
     
     package "TopRow" <<layout>> {
         component [WorkoutController] as rest
