@@ -9,7 +9,11 @@ This project follows a white-box design using the **arc42 template**.
 ![Architecture Diagram](assets/whitebox-diagram.svg)
 
 
+<<<<<<< HEAD
 ## Technology Stack & Service Map
+=======
+![Architecture Diagram](assets/whitebox-diagram.svg)
+>>>>>>> 334b4d0 (readme)
 
 | **Service** | **Responsibility** | **Stack**  | **Data Store** |
 |:------- |:----------- |:----- |:----- |
