@@ -7,7 +7,7 @@ POC to experiment with microservice architecture design, AI tools, java spring b
 
 ## Architecture Diagram
 
-[Architecture Diagram](arc42/images/out/whitebox-diagram.svg)
+![Architecture Diagram](arc42/images/out/whitebox-diagram.svg)
 
 ## Architecture Documentation
 
