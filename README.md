@@ -7,6 +7,8 @@ POC to experiment with microservice architecture design, AI tools, java spring b
 
 ## Architecture Diagram
 
+[Architecture Diagram](arc42/images/out/whitebox-diagram.svg)
+
 ## Architecture Documentation
 
 To design and plan the software architecture for this project, I used arc42 template. One of the goals of this project is to learn about architecture design, specifically microservices design, so [Fitness Tracker Design Document](arc42/arc42-template.adoc) contains all solution strategies and design decisions. Currently, it contains the pre-implementation architecture design for the entire system in the above diagram. As the implementation of this project progresses, any updates or new design decisions will be updated in this document.

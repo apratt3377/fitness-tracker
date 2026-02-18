@@ -10,7 +10,7 @@ image::building-blocks-starter.svg[]
 
 === Whitebox Overall System
 
-image::whitebox.png[]
+image::whitebox-diagram.svg[]
 
 Motivation::
 
