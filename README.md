@@ -1,65 +1,73 @@
-# microservices-fitness-tracker
-Microservices based application to plan, track and analyze workouts.
+# Fitness Tracker: Event-Driven Microservices
+A cloud-native, scalable Proof-of-Concept (POC) designed to track strength training sessions. Leverages an event-driven architecture and AI-powered insights.
 
-## Overview
-
-POC to experiment with microservice architecture design, AI tools, java spring boot and various databases. The goal is to implement a scalable, cloud native solution for users to track their strength training sessions.
-
-## Architecture Diagram
+## System Architecture
+This project follows a white-box design using the **arc42 template**.
+- **Architecture & Design Decisions:** [Detailed Design Document](https://apratt3377.github.io/fitness-tracker-architecture-diagram/) 
+- **Core Pattern:** Event-Driven via SNS/SQS.
 
 ![Architecture Diagram](assets/whitebox-diagram.svg)
 
-## Architecture Documentation
 
-To design and plan the software architecture for this project, I used arc42 template. One of the goals of this project is to learn about architecture design, specifically microservices design, so [Fitness Tracker Design Document](https://apratt3377.github.io/fitness-tracker-architecture-diagram/) contains all solution strategies and design decisions. Currently, it contains the pre-implementation architecture design for the entire system in the above diagram. As the implementation of this project progresses, any updates or new design decisions will be updated in this document.
+## Technology Stack & Service Map
 
-## Microservices
-
-| **Service** | **Description** | **Tech**  |
+| **Service** | **Responsibility** | **Stack**  | **Data Store** |
 |:------- |:----------- |:----- |
-| API Gateway | Entrypoint for requests and user authentication | Spring Cloud Gateway |
-| Authentication Service | User authentication | Spring Security, Redis |
-| User Service | Manages users | Spring Boot, PostgreSQL |
-| Workout Service | Manages user workout routines | Spring Boot, PostgreSQL |
-| Analytics Service | AI to summarize completed workout | python |
-| Notification Service | Stores and alerts users to AI messages | Spring Boot, MongoDB, SSE |
-| Frontend | Webapp for Users | React |
-| SNS & SQS | Message broker | Localstack |
+| **API Gateway** | Request Routing & Auth | Spring Cloud Gateway | - |
+| **Auth Service** | User Auth and Session Management | Spring Security | Redis |
+| **User Service** | Account Management | Spring Boot | PostgreSQL |
+| **Workout Management Service** | Workout Planning & History | Spring Boot | PostgreSQL |
+| **Analytics Service** | AI Workout Summaries | python | LLM API |
+| **Notification Service** | SSE Real-time updates | Spring Boot | MongoDB |
+| **Frontend** | Webapp for Users | TBD | - |
+| **SNS & SQS** | Message broker | Localstack (AWS) | - |
 
-## Setup
+## AI-Assisted Development
+This project serves as a sandbox for **AI-Augmented Engineering** I'm evaluating different AI coding tools in order to:
+- **Accelerate Boilerplate:** Rapidly generate boilerplate code for Spring Boot (Java) and FastAPI (Python) services
+- **Unit Testing:** Leveraging AI to generate high-coverage test suites with 70% coverage
+- **Refactoring:** Garner feedback for code performance and readability
 
-### Prerequisites
-1. docker
-2. kind
+## Local Setup
 
-#### Database & Localstack
+### 1. Prerequisites
+- Docker Desktop
+- [Kind CLI](https://kind.sigs.k8s.io/)
+- Kubectl
 
-``` 
-    cd setup
-    docker-compose up -d
+### 2. Spin up Persistent Infrastructure
+```bash
+cd setup
+docker-compose up -d
 ```
 
-#### Kind Cluster
-
-Because we run the database containers and localstack externally from the kubernetes cluster, there's some additional networking steps to make sure they are accessible from inside kubernetes pods where the microservices will be running. A setup script was created for this.
-
-``` ./setup-cluster.sh ```
-
-A test script is provided to check connectivity between the kind cluster and docker.
-
-``` ./setup-cluster-test.sh ```
+### 3. Initialize Kubernetes & Network Bridge
+Since the DBs and LocalStack live outside Kind, we use a custom bridge script to establish connectivity.
 
 
-## Project Plan
+```bash
+chmod +x ./setup-cluster.sh
+ ./setup-cluster.sh 
+ ```
 
-- [x] The first phase of this project is to develop an initial design document: [Fitness Tracker Design Document](https://apratt3377.github.io/fitness-tracker-architecture-diagram/).
+ ### 4. Verify Connectivity
 
-- [x] The second phase is local infrastructure setup. This includes localstack for AWS services, PostgreSQL, MongoDB, and Redis servers and a local kubernetes cluster. 
+Ensure all infrastructure components are reachable from within the cluster
 
-- [] The 3rd phase is implementation of the microservices with assistance from Codeium. 
+```bash
+ ./setup-cluster-test.sh 
+ ```
 
-- [] The 4th phase focuses on user authentication and routing via API Gateway
+## Roadmap & Evolution
 
-- [] The 5th phase involves a very simple UI generated by Codeium.
+- [x] **Phase 1L** Initial [arc42 Design Strategy](https://apratt3377.github.io/fitness-tracker-architecture-diagram/)
 
-The full Project plan and status can be found here: [Project Plan](docs/project-plan.md)
+- [x] **Phase 2:** Local Hybrid Infrastructure & Network Bridging
+
+- [] **Phase 3:** Service Implementation (User & Workout Management Services)
+
+- [] **Phase 4:** Analytics Layer & Event-Driven Integration (SNS/SQS, Analytics & Notification Service)
+
+- [] **Phase 5:** Frontend built with Codeium
+
+Detailed status tracking is available in the [Project Plan](docs/project-plan.md)
