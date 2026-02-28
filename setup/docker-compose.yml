@@ -1,0 +1,73 @@
+services:
+  # --- Accounts Database ---
+  accounts-db:
+    image: postgres:15-alpine
+    container_name: user-service-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=accounts_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./init-accounts-db.sql:/docker-entrypoint-initdb.d/init-accounts-db.sql
+      - accounts_db_data:/var/lib/postgresql/data
+
+  # --- Auth Cache (Redis) ---
+  auth-cache:
+    image: redis:7-alpine
+    container_name: auth-service-cache
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"] 
+    volumes:
+      - redis_data:/data
+
+  # --- Fitness Database ---
+  fitness-db:
+    image: postgres:15-alpine
+    container_name: workout-management-service-db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=fitness_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      # NOTE: Once you move to Liquibase, you will remove the line below
+      - ./init-fitness-db.sql:/docker-entrypoint-initdb.d/init-fitness-db.sql
+      - fitness_db_data:/var/lib/postgresql/data
+
+  # --- Notification NoSQL Database ---
+  notification-db:
+    image: mongo:6.0
+    container_name: notification-service-db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=notification_db
+      - MONGO_INITDB_ROOT_USERNAME=mongodb
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - notification_db_data:/data/db
+
+  # --- LocalStack (SQS/SNS) ---
+  localstack:
+    image: localstack/localstack:latest
+    container_name: fitness-infra-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,sns
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - "./localstack-setup.sh:/etc/localstack/init/ready.d/setup.sh" # Auto-runs your script
+      - localstack_data:/var/lib/localstack
+
+volumes:
+  accounts_db_data:
+  fitness_db_data:
+  notification_db_data:
+  redis_data:
+  localstack_data:
