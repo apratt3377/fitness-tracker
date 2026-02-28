@@ -60,7 +60,11 @@ Ensure all infrastructure components are reachable from within the cluster
 
 ## Roadmap & Evolution
 
+<<<<<<< HEAD
 - [x] **Phase 1** Initial [arc42 Design Strategy](https://apratt3377.github.io/fitness-tracker-architecture-diagram/)
+=======
+- [x] **Phase 1L** Initial [arc42 Design Strategy](https://apratt3377.github.io/fitness-tracker-architecture-diagram/)
+>>>>>>> e5ca42d (readme updates)
 
 - [x] **Phase 2:** Local Hybrid Infrastructure & Network Bridging
 
@@ -70,4 +74,8 @@ Ensure all infrastructure components are reachable from within the cluster
 
 - [] **Phase 5:** Frontend built with Codeium
 
+<<<<<<< HEAD
 Detailed status tracking is available in the [Project Plan](docs/project-plan.md)
+=======
+Detailed status tracking is available in the [Project Plan](docs/project-plan.md)
+>>>>>>> e5ca42d (readme updates)
