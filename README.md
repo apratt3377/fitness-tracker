@@ -12,7 +12,7 @@ This project follows a white-box design using the **arc42 template**.
 ## Technology Stack & Service Map
 
 | **Service** | **Responsibility** | **Stack**  | **Data Store** |
-|:------- |:----------- |:----- |
+|:------- |:----------- |:----- |:----- |
 | **API Gateway** | Request Routing & Auth | Spring Cloud Gateway | - |
 | **Auth Service** | User Auth and Session Management | Spring Security | Redis |
 | **User Service** | Account Management | Spring Boot | PostgreSQL |
@@ -23,8 +23,8 @@ This project follows a white-box design using the **arc42 template**.
 | **SNS & SQS** | Message broker | Localstack (AWS) | - |
 
 ## AI-Assisted Development
-This project serves as a sandbox for **AI-Augmented Engineering** I'm evaluating different AI coding tools in order to:
-- **Accelerate Boilerplate:** Rapidly generate boilerplate code for Spring Boot (Java) and FastAPI (Python) services
+This project serves as a sandbox for **AI-Augmented Engineering**. I'm evaluating different AI coding tools in order to:
+- **Accelerate Development:** Rapidly generate boilerplate code for Spring Boot (Java) and FastAPI (Python) services
 - **Unit Testing:** Leveraging AI to generate high-coverage test suites with 70% coverage
 - **Refactoring:** Garner feedback for code performance and readability
 
@@ -60,7 +60,7 @@ Ensure all infrastructure components are reachable from within the cluster
 
 ## Roadmap & Evolution
 
-- [x] **Phase 1L** Initial [arc42 Design Strategy](https://apratt3377.github.io/fitness-tracker-architecture-diagram/)
+- [x] **Phase 1** Initial [arc42 Design Strategy](https://apratt3377.github.io/fitness-tracker-architecture-diagram/)
 
 - [x] **Phase 2:** Local Hybrid Infrastructure & Network Bridging
 
