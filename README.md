@@ -17,7 +17,7 @@ This project follows a white-box design using the **arc42 template**.
 | **Auth Service** | User Auth and Session Management | Spring Security | Redis |
 | **User Service** | Account Management | Spring Boot | PostgreSQL |
 | **Workout Management Service** | Workout Planning & History | Spring Boot | PostgreSQL |
-| **Analytics Service** | AI Workout Summaries | python | LLM API |
+| **Analytics Service** | AI Workout Summaries | Python | LLM API |
 | **Notification Service** | SSE Real-time updates | Spring Boot | MongoDB |
 | **Frontend** | Webapp for Users | TBD | - |
 | **SNS & SQS** | Message broker | Localstack (AWS) | - |
@@ -25,7 +25,7 @@ This project follows a white-box design using the **arc42 template**.
 ## AI-Assisted Development
 This project serves as a sandbox for **AI-Augmented Engineering**. I'm evaluating different AI coding tools in order to:
 - **Accelerate Development:** Rapidly generate boilerplate code for Spring Boot (Java) and FastAPI (Python) services
-- **Unit Testing:** Leveraging AI to generate high-coverage test suites with 70% coverage
+- **Unit Testing:** Leveraging AI to generate high-coverage test suites with 85% coverage
 - **Refactoring:** Garner feedback for code performance and readability
 
 ## Local Setup
@@ -35,27 +35,15 @@ This project serves as a sandbox for **AI-Augmented Engineering**. I'm evaluatin
 - [Kind CLI](https://kind.sigs.k8s.io/)
 - Kubectl
 
-### 2. Spin up Persistent Infrastructure
-```bash
-cd setup
-docker-compose up -d
-```
 
-### 3. Initialize Kubernetes & Network Bridge
-Since the DBs and LocalStack live outside Kind, we use a custom bridge script to establish connectivity.
+### 2. Spin up Infrastructure and Kubernetes Cluster
+This script will create the kind cluster and bring up the databases and LocalStack with docker.
+Since the DBs and LocalStack live outside Kind, we use host.docker.internal bridge for connectivity.
 
 
 ```bash
 chmod +x ./setup-cluster.sh
  ./setup-cluster.sh 
- ```
-
- ### 4. Verify Connectivity
-
-Ensure all infrastructure components are reachable from within the cluster
-
-```bash
- ./setup-cluster-test.sh 
  ```
 
 ## Roadmap & Evolution
