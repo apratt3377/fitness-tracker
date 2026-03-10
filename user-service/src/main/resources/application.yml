@@ -1,0 +1,52 @@
+spring:
+  application:
+    # This name is used by Spring Cloud and Kubernetes logs
+    name: user-service
+
+  datasource:
+    # Use the bridge hostname we configured in CoreDNS
+    url: jdbc:postgresql://host.docker.internal:5432/accounts_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Performance tuning for small clusters
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+# Monitoring and Kubernetes Probes
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose health and metrics for Prometheus
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        # Crucial for Kubernetes Liveness/Readiness checks
+        enabled: true
+      show-details: when_authorized
+
+server:
+  port: 8081
+  shutdown: graceful # Allows K8s to stop the pod without dropping requests
+
+# OpenAPI / Swagger configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tagsSorter: alpha
+    operationsSorter: method # Sorts by GET, POST, DELETE
+    doc-expansion: list
+  api-docs:
+    path: /api-docs

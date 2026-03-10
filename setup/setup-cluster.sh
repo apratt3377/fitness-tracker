@@ -19,8 +19,8 @@ kubectl wait --namespace ingress-nginx \
 
 # --- 2. DATABASE PREP (The "Lead Engineer" approach) ---
 echo "Ensuring Docker DB containers are running..."
-# This starts your DBs if they aren't already up
-docker-compose up -d
+# Force restart of containers for dbs and localstack
+docker-compose up -d --remove-orphans --force-recreate
 
 echo "------------------------------------------------------------"
 echo "Setup Complete!"
