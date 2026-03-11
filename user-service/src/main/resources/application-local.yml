@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    # Use localhost for your Docker-mapped port
+    url: jdbc:postgresql://localhost:5432/accounts_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      # Prevents those 'skipping constraint' warnings locally
+      ddl-auto: none
+    # Useful for debugging your Workout Analysis queries
+    show-sql: true
+
+# OpenAPI / Swagger configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tagsSorter: alpha
+    operationsSorter: method # Sorts by GET, POST, DELETE
+    doc-expansion: list
+  api-docs:
+    path: /api-docs
