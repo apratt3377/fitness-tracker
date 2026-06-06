@@ -14,28 +14,27 @@ import org.hibernate.type.TrueFalseConverter;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "accounts", schema = "accounts")
-// Overrides the default DELETE behavior with an UPDATE
 @SoftDelete(columnName = "deleted_at", converter = TrueFalseConverter.class)
 public class UserEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
     @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash; // Stores the hashed password
+    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 32)
+    @Column(name = "roles", length = 32)
     private Role roles;
 
     @CreationTimestamp
@@ -45,11 +44,4 @@ public class UserEntity {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    public enum Role {
-        USER,
-        ADMIN
-    }
-
 }
-

@@ -1,10 +1,11 @@
 package com.fitnesstracker.userservice.service;
 
+import com.fitnesstracker.userservice.domain.Role;
 import com.fitnesstracker.userservice.domain.UserEntity;
 import com.fitnesstracker.userservice.dto.UserCreateRequest;
 import com.fitnesstracker.userservice.dto.UserPrincipalResponse;
 import com.fitnesstracker.userservice.repository.UserRepository;
-
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,10 +25,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
+class UserServiceTest {
 
     @Mock
-    private UserRepository userDao;
+    private UserRepository userRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -35,113 +37,130 @@ public class UserServiceTest {
     private UserService userService;
 
     @Test
-    @DisplayName("authenticate() - Should return Principal when credentials match")
-    void authenticateSuccess() {
-        // Arrange
+    @DisplayName("authenticate() - returns principal when credentials match")
+    void authenticate_validCredentials_returnsPrincipal() {
         String username = "user_a";
-        String pass = "password123";
+        String plainPass = "password123";
         UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
         user.setUsername(username);
         user.setPasswordHash("hashed_string");
-        user.setRoles(UserEntity.Role.USER);
+        user.setRoles(Role.USER);
 
-        when(userDao.findByUsername(username)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(pass, "hashed_string")).thenReturn(true);
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(plainPass, "hashed_string")).thenReturn(true);
 
-        // Act
-        Optional<UserPrincipalResponse> result = userService.authenticate(username, pass);
+        Optional<UserPrincipalResponse> result = userService.authenticate(username, plainPass);
 
-        // Assert
         assertTrue(result.isPresent());
         assertEquals(username, result.get().username());
-        assertEquals(UserEntity.Role.USER, result.get().roles());
+        assertEquals(List.of("USER"), result.get().roles());
     }
 
-    
-
     @Test
-    @DisplayName("authenticate() - Should return empty when password is wrong")
-    void authenticateWrongPassword() {
-        // Arrange
+    @DisplayName("authenticate() - returns empty when password is wrong")
+    void authenticate_wrongPassword_returnsEmpty() {
         String username = "user_a";
         UserEntity user = new UserEntity();
         user.setPasswordHash("correct_hash");
 
-        when(userDao.findByUsername(username)).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(anyString(), eq("correct_hash"))).thenReturn(false);
 
-        // Act
         Optional<UserPrincipalResponse> result = userService.authenticate(username, "wrong_pass");
 
-        // Assert
         assertFalse(result.isPresent());
     }
 
     @Test
-    @DisplayName("createUser() - Should hash password and default to USER role")
-    void createUserLogic() {
-        // Arrange
-        UserCreateRequest request = new UserCreateRequest("newbie", "raw_pass", "INVALID_ROLE");
-        when(passwordEncoder.encode("raw_pass")).thenReturn("hashed_pass");
-        
-        // Use a spy or capture to verify the entity state before saving
-        when(userDao.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    @DisplayName("authenticate() - performs dummy BCrypt when username does not exist to prevent timing enumeration")
+    void authenticate_unknownUsername_runsDummyBcryptAndReturnsEmpty() {
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        // Act
-        UserEntity savedUser = userService.createUser(request);
+        Optional<UserPrincipalResponse> result = userService.authenticate("ghost", "anyPass");
 
-        // Assert
-        assertEquals("hashed_pass", savedUser.getPasswordHash());
-        assertEquals(UserEntity.Role.USER, savedUser.getRoles(), "Should fallback to USER for invalid roles");
-        verify(userDao, times(1)).save(any());
+        assertFalse(result.isPresent());
+        // Verify BCrypt was still called — prevents timing side-channel leaking username existence
+        verify(passwordEncoder, times(1)).matches(eq("anyPass"), anyString());
     }
 
     @Test
-    @DisplayName("deleteUser() - Should invoke DAO delete")
-    void deleteUserInvokesDao() {
-        UUID id = UUID.randomUUID();
-        doNothing().when(userDao).deleteById(id);
+    @DisplayName("createUser() - hashes password and defaults to USER role for null role input")
+    void createUser_nullRole_defaultsToUser() {
+        UserCreateRequest request = new UserCreateRequest("newbie", "rawPassword", null);
+        when(passwordEncoder.encode("rawPassword")).thenReturn("hashed_pass");
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        userService.deleteUser(id);
+        UserEntity saved = userService.createUser(request);
 
-        verify(userDao, times(1)).deleteById(id);
+        assertEquals("hashed_pass", saved.getPasswordHash());
+        assertEquals(Role.USER, saved.getRoles());
+        verify(userRepository, times(1)).save(any());
     }
 
     @Test
-    @DisplayName("findById() - Should return user when exists")
-    void findByIdSuccess() {
-        // Arrange
+    @DisplayName("createUser() - assigns ADMIN role when explicitly specified")
+    void createUser_adminRole_assignsAdmin() {
+        UserCreateRequest request = new UserCreateRequest("adminUser", "rawPassword", "ADMIN");
+        when(passwordEncoder.encode(any())).thenReturn("hashed_pass");
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UserEntity saved = userService.createUser(request);
+
+        assertEquals(Role.ADMIN, saved.getRoles());
+    }
+
+    @Test
+    @DisplayName("findById() - returns user when found")
+    void findById_found_returnsUser() {
         UUID id = UUID.randomUUID();
         UserEntity user = new UserEntity();
         user.setId(id);
-        
-        when(userDao.findById(id)).thenReturn(Optional.of(user));
 
-        // Act
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
         Optional<UserEntity> result = userService.findById(id);
 
-        // Assert
         assertTrue(result.isPresent());
         assertEquals(id, result.get().getId());
-        verify(userDao, times(1)).findById(id);
     }
 
     @Test
-    @DisplayName("getAllUsers() - Should return list of users")
-    void getAllUsersSuccess() {
-        // Arrange
-        UserEntity user1 = new UserEntity();
-        UserEntity user2 = new UserEntity();
-        when(userDao.findAll()).thenReturn(java.util.List.of(user1, user2));
+    @DisplayName("findById() - returns empty when not found")
+    void findById_notFound_returnsEmpty() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.findById(id)).thenReturn(Optional.empty());
 
-        // Act
-        Iterable<UserEntity> result = userService.getAllUsers();
+        assertTrue(userService.findById(id).isEmpty());
+    }
 
-        // Assert
-        assertNotNull(result);
-        long count = java.util.stream.StreamSupport.stream(result.spliterator(), false).count();
-        assertEquals(2, count);
-        verify(userDao, times(1)).findAll();
+    @Test
+    @DisplayName("getAllUsers() - returns list of users")
+    void getAllUsers_returnsAll() {
+        when(userRepository.findAll()).thenReturn(List.of(new UserEntity(), new UserEntity()));
+
+        assertEquals(2, userService.getAllUsers().size());
+    }
+
+    @Test
+    @DisplayName("deleteUser() - calls deleteById when user exists")
+    void deleteUser_existingUser_invokesDelete() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.existsById(id)).thenReturn(true);
+        doNothing().when(userRepository).deleteById(id);
+
+        userService.deleteUser(id);
+
+        verify(userRepository, times(1)).deleteById(id);
+    }
+
+    @Test
+    @DisplayName("deleteUser() - throws EntityNotFoundException when user does not exist")
+    void deleteUser_nonExistentUser_throwsNotFound() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.existsById(id)).thenReturn(false);
+
+        assertThrows(EntityNotFoundException.class, () -> userService.deleteUser(id));
+        verify(userRepository, never()).deleteById(any());
     }
 }

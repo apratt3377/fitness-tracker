@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: user-service
 spec:
-  replicas: 2 # High Availability: always have a backup
+  replicas: 2
   selector:
     matchLabels:
       app: user-service
@@ -12,33 +12,69 @@ spec:
       labels:
         app: user-service
     spec:
+      # Must exceed Spring Boot's graceful-shutdown drain timeout (30s) to avoid SIGKILL mid-drain.
+      terminationGracePeriodSeconds: 60
       containers:
       - name: user-service
         image: user-service:latest
-        imagePullPolicy: Never # Critical for kinD local images
+        imagePullPolicy: Never  # kinD only — change to IfNotPresent or Always for non-local clusters
         ports:
         - containerPort: 8081
         env:
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://host.docker.internal:5432/accounts_db"
+          valueFrom:
+            secretKeyRef:
+              name: user-service-db-secret
+              key: url
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: user-service-db-secret
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: user-service-db-secret
+              key: password
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        lifecycle:
+          preStop:
+            # Sleep before SIGTERM so kube-proxy/nginx can drain the endpoint
+            # before Spring Boot starts its graceful shutdown. Without this,
+            # in-flight requests routed here after SIGTERM get 502s.
+            exec:
+              command: ["sh", "-c", "sleep 5"]
         livenessProbe:
           httpGet:
+            # Kubelet probes the pod directly on containerPort — no ingress prefix.
             path: /actuator/health/liveness
             port: 8081
           initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
             port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: user-service
 spec:
+  type: ClusterIP
   selector:
     app: user-service
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8081
+  - protocol: TCP
+    port: 80
+    targetPort: 8081

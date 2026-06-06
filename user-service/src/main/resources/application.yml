@@ -23,6 +23,10 @@ spring:
       hibernate:
         format_sql: true
 
+  mvc:
+    problemdetails:
+      enabled: true
+
 # Monitoring and Kubernetes Probes
 management:
   endpoints:
@@ -40,6 +44,8 @@ management:
 server:
   port: 8081
   shutdown: graceful # Allows K8s to stop the pod without dropping requests
+  tomcat:
+    max-http-form-post-size: 10KB
 
 # OpenAPI / Swagger configuration
 springdoc:
