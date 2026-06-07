@@ -2,14 +2,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: user-service-ingress
-  annotations:
-    # nginx.ingress.kubernetes.io/ingress.class is deprecated since K8s 1.18 — use spec.ingressClassName below.
-    # Block /internal/ at the nginx level as defence-in-depth even though no ingress rule matches it.
-    # Returns 404 (not 403) to avoid revealing that the path exists.
-    nginx.ingress.kubernetes.io/server-snippet: |
-      location ~* ^/internal/ {
-        return 404;
-      }
+  # /internal/ is not routed by any ingress rule — NGINX returns 404 by default.
+  # NetworkPolicy enforces in-cluster access restrictions.
+  annotations: {}
 spec:
   ingressClassName: nginx
   rules:

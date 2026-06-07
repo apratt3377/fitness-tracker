@@ -43,14 +43,19 @@ docker build -t user-service:latest .
 kind load docker-image user-service:latest --name fitness-cluster
 ```
 
-### 3.3 Deployment
+### 3.3 Create the database secret
+The deployment pulls DB credentials from a Kubernetes secret. Create it before applying any manifests:
 ```bash
+kubectl create secret generic user-service-db-secret \
+  --from-literal=url='jdbc:postgresql://host.docker.internal:5432/accounts_db' \
+  --from-literal=username='postgres' \
+  --from-literal=password='postgres'
+```
 
-# Deployment
-kubectl apply -f k8s/deployment.yaml
-
-# Setup ingress
-kubectl apply -f k8s/ingress.yaml
+### 3.4 Deployment
+```bash
+# Apply all manifests (deployment, service, ingress, network policy)
+kubectl apply -f k8s/
 
 # Check pod status
 kubectl get pods -l app=user-service
