@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS accounts.accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL, -- Constraint: Unique
     password_hash VARCHAR(255) NOT NULL,   -- Constraint: Not Null
-    roles VARCHAR(32) CHECK (roles IN ('USER', 'ADMIN')), -- Constraint: Role values
-    deleted_at CHAR(1) NOT NULL DEFAULT 'F',
+    role VARCHAR(32) CHECK (role IN ('USER', 'ADMIN')), -- Constraint: Role values
+    deleted CHAR(1) NOT NULL DEFAULT 'F',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

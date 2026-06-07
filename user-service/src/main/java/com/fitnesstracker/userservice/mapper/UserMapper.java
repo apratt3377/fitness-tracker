@@ -16,6 +16,6 @@ public class UserMapper {
 
     public AdminUserResponse toAdminResponse(UserEntity user) {
         if (user == null) return null;
-        return new AdminUserResponse(user.getId(), user.getUsername(), user.getRoles(), user.getCreatedAt());
+        return new AdminUserResponse(user.getId(), user.getUsername(), user.getRole(), user.getCreatedAt());
     }
 }

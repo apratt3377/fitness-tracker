@@ -53,7 +53,7 @@ public class UserService {
         return Optional.of(new UserPrincipalResponse(
                 user.getId(),
                 user.getUsername(),
-                List.of(user.getRoles().name())
+                user.getRole().name()
         ));
     }
 
@@ -63,10 +63,10 @@ public class UserService {
         newUser.setUsername(request.username());
         newUser.setPasswordHash(passwordEncoder.encode(request.password()));
         Role assignedRole = Arrays.stream(Role.values())
-                .filter(r -> r.name().equalsIgnoreCase(request.roles()))
+                .filter(r -> r.name().equalsIgnoreCase(request.role()))
                 .findFirst()
                 .orElse(Role.USER);
-        newUser.setRoles(assignedRole);
+        newUser.setRole(assignedRole);
         return userRepository.save(newUser);
     }
 

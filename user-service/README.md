@@ -73,8 +73,8 @@ Swagger UI at http://localhost:8080/swagger-ui.html
 ### 4.1 API Endpoints
 | Method | Endpoint | Description | Access |
 |:--- |:--- |:--- |:--- |
-| **GET** | `/api/users/me` | Retrieve current user profile using `X-User-Id` header. | User Facing |
-| **POST** | `/internal/users/authenticate` | Verifies credentials; returns ID and Roles for JWT generation. | Internal |
-| **POST** | `/internal/users/create` | Creates a new user record (triggered during registration). | Internal |
-| **GET** | `/api/admin/users` | Lists all registered users with passwords stripped out. | Admin |
-| **DELETE** | `/api/admin/users/{id}` | Permanently removes (Soft-Delete) a user account by UUID. | Admin |
+| **GET** | `/api/v1/users/me` | Retrieve current user profile using `X-User-Id` header injected by the gateway. | User Facing |
+| **POST** | `/internal/v1/identity/authenticate` | Verifies credentials; returns ID and role for JWT generation. | Internal |
+| **POST** | `/internal/v1/identity/users` | Creates a new user record (triggered during registration). | Internal |
+| **GET** | `/internal/v1/identity/users` | Lists all user accounts with passwords stripped out. | Internal |
+| **DELETE** | `/internal/v1/identity/users/{id}` | Soft-deletes a user account by UUID. | Internal |

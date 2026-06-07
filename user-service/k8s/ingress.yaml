@@ -20,10 +20,3 @@ spec:
             name: user-service
             port:
               number: 80
-      - path: /api/v1/admin/users
-        pathType: Prefix
-        backend:
-          service:
-            name: user-service
-            port:
-              number: 80

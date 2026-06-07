@@ -4,10 +4,9 @@ spring:
     name: user-service
 
   datasource:
-    # Use the bridge hostname we configured in CoreDNS
-    url: jdbc:postgresql://host.docker.internal:5432/accounts_db
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       # Performance tuning for small clusters

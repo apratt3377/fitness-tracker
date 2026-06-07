@@ -11,7 +11,7 @@ class UserMapperTest {
     private final UserMapper userMapper = new UserMapper();
 
     @Test
-    void shouldMapEntityToResponseCorrectlly() {
+    void shouldMapEntityToResponseCorrectly() {
         // Arrange
         UUID id = UUID.randomUUID();
         UserEntity entity = new UserEntity();

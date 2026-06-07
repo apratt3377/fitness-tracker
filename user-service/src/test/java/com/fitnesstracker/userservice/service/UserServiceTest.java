@@ -45,7 +45,7 @@ class UserServiceTest {
         user.setId(UUID.randomUUID());
         user.setUsername(username);
         user.setPasswordHash("hashed_string");
-        user.setRoles(Role.USER);
+        user.setRole(Role.USER);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(plainPass, "hashed_string")).thenReturn(true);
@@ -54,7 +54,7 @@ class UserServiceTest {
 
         assertTrue(result.isPresent());
         assertEquals(username, result.get().username());
-        assertEquals(List.of("USER"), result.get().roles());
+        assertEquals("USER", result.get().role());
     }
 
     @Test
@@ -94,7 +94,7 @@ class UserServiceTest {
         UserEntity saved = userService.createUser(request);
 
         assertEquals("hashed_pass", saved.getPasswordHash());
-        assertEquals(Role.USER, saved.getRoles());
+        assertEquals(Role.USER, saved.getRole());
         verify(userRepository, times(1)).save(any());
     }
 
@@ -107,7 +107,7 @@ class UserServiceTest {
 
         UserEntity saved = userService.createUser(request);
 
-        assertEquals(Role.ADMIN, saved.getRoles());
+        assertEquals(Role.ADMIN, saved.getRole());
     }
 
     @Test

@@ -12,10 +12,10 @@ public record UserCreateRequest(
     String username,
 
     @NotBlank
-    @Size(min = 8, max = 255, message = "Password must be between 8 and 255 characters")
+    @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
     String password,
 
     // null → defaults to USER in service layer; any non-null value must be exactly USER or ADMIN.
     @Pattern(regexp = "USER|ADMIN", message = "Role must be USER or ADMIN")
-    String roles
+    String role
 ) {}

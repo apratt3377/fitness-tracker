@@ -20,7 +20,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "accounts", schema = "accounts")
-@SoftDelete(columnName = "deleted_at", converter = TrueFalseConverter.class)
+@SoftDelete(columnName = "deleted", converter = TrueFalseConverter.class)
 public class UserEntity {
 
     @Id
@@ -34,8 +34,8 @@ public class UserEntity {
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "roles", length = 32)
-    private Role roles;
+    @Column(name = "role", length = 32)
+    private Role role;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

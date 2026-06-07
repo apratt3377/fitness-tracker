@@ -33,21 +33,21 @@ graph TD
     GW -- "GET /api/v1/users/me\n(X-User-Id header)" --> US
     US -- "UserResponse" --> Client
 
-    Client -- "GET /api/v1/admin/users\n(ADMIN role)" --> GW
-    GW -- "GET /api/v1/admin/users" --> US
+    Client -- "DELETE /internal/v1/identity/users/{id}\n(via Auth Service)" --> GW
+    GW -- "DELETE /internal/v1/identity/users/{id}" --> Auth
+    Auth -- "DELETE /internal/v1/identity/users/{id}" --> US
 ```
 
 ### API Surface Overview
 
-The service exposes three distinct API surfaces, each with different trust and access semantics:
+The service exposes two distinct API surfaces, each with different trust and access semantics:
 
 | Surface | Path Prefix | Consumer | Trust Level |
 |---|---|---|---|
 | User-facing (public) | `/api/v1/users/` | Authenticated end-users via Gateway | Gateway-validated identity via `X-User-Id` |
 | Internal | `/internal/v1/identity/` | Auth Service (service-to-service) | Network-level trust (cluster-internal only) |
-| Admin | `/api/v1/admin/users/` | ADMIN-role users via Gateway | Gateway-validated identity + role |
 
-> **Versioning note**: The existing implementation uses `/api/users/` and `/internal/users/`. This must be updated to `/api/v1/users/` and `/internal/v1/identity/` to align with the arc42 specification.
+> Admin operations (list users, delete user) are routed through the Auth Service via the internal surface. The Auth Service validates the ADMIN role before forwarding to the User Service, and handles token invalidation atomically with deletion.
 
 ## Components and Interfaces
 
@@ -96,6 +96,16 @@ public class InternalController {
     // Returns 201 Created with the persisted entity.
     @PostMapping("/users")
     ResponseEntity<UserResponse> create(@RequestBody @Valid UserCreateRequest request);
+
+    // Lists all active user accounts; passwords stripped via UserMapper.
+    // Called by Auth Service for admin operations after ADMIN role is validated.
+    @GetMapping("/users")
+    ResponseEntity<List<AdminUserResponse>> listAll();
+
+    // Soft-deletes a user by UUID (sets deleted = 'T').
+    // Called by Auth Service, which also invalidates any active tokens for the user.
+    @DeleteMapping("/users/{id}")
+    ResponseEntity<Void> delete(@PathVariable UUID id);
 }
 ```
 
@@ -103,34 +113,7 @@ public class InternalController {
 - Password verification via `BCryptPasswordEncoder.matches()`
 - Role assignment defaulting to `USER` when none is provided
 - Password hashing on create via `BCryptPasswordEncoder.encode()`
-
----
-
-### AdminController (Admin Operations)
-
-**Purpose**: Provides administrative visibility and lifecycle management for user accounts. Only accessible by users whose JWT contains the `ADMIN` role, enforced by the API Gateway.
-
-**Interface**:
-
-```java
-@RestController
-@RequestMapping("/api/v1/admin/users")
-public class AdminController {
-
-    // Lists all accounts; passwords stripped via UserMapper.
-    @GetMapping
-    ResponseEntity<List<UserResponse>> listAll();
-
-    // Soft-deletes a user by UUID (sets deleted_at = 'T').
-    @DeleteMapping("/{id}")
-    ResponseEntity<Void> remove(@PathVariable UUID id);
-}
-```
-
-**Responsibilities**:
-- Expose all non-deleted user accounts to admins
-- Soft-delete (not hard-delete) accounts on `DELETE` — sets `deleted_at` flag via Hibernate `@SoftDelete`
-- Strip sensitive fields using `UserMapper`
+- User listing and soft-deletion for admin operations delegated from Auth Service
 
 ---
 
@@ -183,6 +166,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 @Component
 public class UserMapper {
     UserResponse toResponse(UserEntity user);
+    AdminUserResponse toAdminResponse(UserEntity user);
 }
 ```
 
@@ -193,9 +177,9 @@ public class UserMapper {
 ```java
 @Entity
 @Table(name = "accounts", schema = "accounts")
-@SoftDelete(columnName = "deleted_at", converter = TrueFalseConverter.class)
+@SoftDelete(columnName = "deleted", converter = TrueFalseConverter.class)
 public class UserEntity {
-    @Id @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;                        // PRIMARY KEY, gen_random_uuid()
 
     @Column(nullable = false, unique = true, length = 50)
@@ -205,8 +189,8 @@ public class UserEntity {
     String passwordHash;            // BCrypt hash, NOT NULL, never serialized to API
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 32)
-    Role roles;                     // 'USER' | 'ADMIN'
+    @Column(name = "role", length = 32)
+    Role role;                      // 'USER' | 'ADMIN'
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -216,8 +200,8 @@ public class UserEntity {
     @Column(name = "updated_at")
     OffsetDateTime updatedAt;
 
-    // deleted_at managed by @SoftDelete — 'F' (active) or 'T' (deleted)
-    // Hibernate automatically filters deleted_at = 'T' from all queries
+    // deleted managed by @SoftDelete — 'F' (active) or 'T' (deleted)
+    // Hibernate automatically filters deleted = 'T' from all queries
 
     enum Role { USER, ADMIN }
 }
@@ -230,18 +214,18 @@ CREATE TABLE accounts.accounts (
     id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     username     VARCHAR(50)   UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    roles        VARCHAR(32)   CHECK (roles IN ('USER', 'ADMIN')),
-    deleted_at   CHAR(1)       NOT NULL DEFAULT 'F',
+    role         VARCHAR(32)   CHECK (role IN ('USER', 'ADMIN')),
+    deleted      CHAR(1)       NOT NULL DEFAULT 'F',
     created_at   TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 **Validation Rules**:
-- `username`: 1–50 characters, must be unique
-- `password`: raw value max 255 chars in request; stored as BCrypt hash (always 60 chars)
-- `roles`: must be `USER` or `ADMIN`; defaults to `USER` if absent or unrecognized
-- Soft-delete: `deleted_at` set to `'T'` on deletion; Hibernate filters these rows automatically
+- `username`: 3–50 characters, alphanumeric/dots/hyphens/underscores, must be unique
+- `password`: raw value 8–72 chars in request (BCrypt truncates at 72 bytes); stored as BCrypt hash (always 60 chars)
+- `role`: must be `USER` or `ADMIN`; defaults to `USER` if absent or unrecognized
+- Soft-delete: `deleted` set to `'T'` on deletion; Hibernate filters these rows automatically
 
 ---
 
@@ -250,15 +234,15 @@ CREATE TABLE accounts.accounts (
 ```java
 // Request to create a new user account (internal use only)
 record UserCreateRequest(
-    @NotBlank @Size(max = 50) String username,
-    @NotBlank @Size(max = 255) String password,  // plain password from registration flow
-    @Size(max = 32) @Pattern(regexp = "USER|ADMIN") String roles
+    @NotBlank @Size(min = 3, max = 50) @Pattern(regexp = "[a-zA-Z0-9._-]+") String username,
+    @NotBlank @Size(min = 8, max = 72) String password,  // plain password; BCrypt truncates at 72 bytes
+    @Pattern(regexp = "USER|ADMIN") String role           // null → defaults to USER
 ) {}
 
 // Request to authenticate a user (internal use only)
 record AuthRequest(
-    String username,
-    String password
+    @NotBlank String username,
+    @NotBlank String password
 ) {}
 
 // Safe public response — no credentials exposed
@@ -271,7 +255,15 @@ record UserResponse(
 record UserPrincipalResponse(
     UUID id,
     String username,
-    UserEntity.Role roles
+    String role
+) {}
+
+// Admin response — includes role and creation date; no credentials exposed
+record AdminUserResponse(
+    UUID id,
+    String username,
+    Role role,
+    OffsetDateTime createdAt
 ) {}
 ```
 
@@ -447,7 +439,7 @@ Integration tests use H2 in-memory with `MODE=PostgreSQL` and `ddl-auto=create-d
 ## Performance Considerations
 
 - **Connection pool**: HikariCP configured with `maximum-pool-size: 10`, `minimum-idle: 2`. Appropriate for a low-to-medium traffic user management service.
-- **Soft deletes**: Hibernate's `@SoftDelete` automatically appends `WHERE deleted_at = 'F'` to all queries. No manual filtering needed; no index overhead concern at expected data volumes.
+- **Soft deletes**: Hibernate's `@SoftDelete` automatically appends `WHERE deleted = 'F'` to all queries. No manual filtering needed; no index overhead concern at expected data volumes.
 - **BCrypt cost factor**: Strength 10 is the recommended default. At ~100ms per hash, this is suitable for a login endpoint that is not under brute-force pressure (API Gateway should apply rate limiting).
 - **UUID primary keys**: `GenerationType.AUTO` with PostgreSQL maps to `gen_random_uuid()`. For high-insert scenarios, consider `GenerationType.UUID` with explicit sequence or client-side UUID generation to avoid table locking.
 
@@ -528,7 +520,7 @@ For any non-blank password string `p`, calling `BCrypt_Encoder.encode(p)` produc
 
 ### Property 3: Role assignment is total
 
-For any `UserCreateRequest` where the `roles` field is `null`, blank, or any string other than `"USER"` or `"ADMIN"`, the resulting `UserEntity.roles` is always `Role.USER`. For `"USER"` or `"ADMIN"` inputs, the corresponding `Role` enum value is assigned. The `roles` field is never `null` on a persisted entity.
+For any `UserCreateRequest` where the `role` field is `null`, blank, or any string other than `"USER"` or `"ADMIN"`, the resulting `UserEntity.role` is always `Role.USER`. For `"USER"` or `"ADMIN"` inputs, the corresponding `Role` enum value is assigned. The `role` field is never `null` on a persisted entity.
 
 **Validates: Requirements 1.3, 1.4, 7.2**
 
@@ -536,7 +528,7 @@ For any `UserCreateRequest` where the `roles` field is `null`, blank, or any str
 
 ### Property 4: Soft-delete makes users invisible to all queries
 
-For any user that has been soft-deleted via `deleteUser(id)`, all subsequent application-level queries — including `findById(id)`, `findByUsername(username)`, and `findAll()` — exclude that user from their results. The underlying row remains in the database with `deleted_at = 'T'` but is never returned by any repository method.
+For any user that has been soft-deleted via `deleteUser(id)`, all subsequent application-level queries — including `findById(id)`, `findByUsername(username)`, and `findAll()` — exclude that user from their results. The underlying row remains in the database with `deleted = 'T'` but is never returned by any repository method.
 
 **Validates: Requirements 4.3, 5.2, 8.2**
 
@@ -552,7 +544,7 @@ For any `AuthRequest`, when the credentials are invalid — whether because the 
 
 ### Property 6: Role is propagated to UserPrincipalResponse
 
-For any user account with a stored `roles` value, a successful call to `POST /internal/v1/identity/authenticate` returns a `UserPrincipalResponse` whose `roles` field equals the stored `UserEntity.roles` enum value.
+For any user account with a stored `role` value, a successful call to `POST /internal/v1/identity/authenticate` returns a `UserPrincipalResponse` whose `role` field equals the stored `UserEntity.role` enum name for that account.
 
 **Validates: Requirements 7.3**
 

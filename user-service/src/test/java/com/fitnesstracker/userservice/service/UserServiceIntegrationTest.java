@@ -36,7 +36,7 @@ class UserServiceIntegrationTest {
 
         assertTrue(found.isPresent());
         assertEquals("alice", found.get().getUsername());
-        assertEquals(Role.USER, found.get().getRoles());
+        assertEquals(Role.USER, found.get().getRole());
         assertNotEquals("securePass1", found.get().getPasswordHash(), "Plain password must not be stored");
     }
 
@@ -49,7 +49,7 @@ class UserServiceIntegrationTest {
 
         assertTrue(principal.isPresent());
         assertEquals("bob", principal.get().username());
-        assertTrue(principal.get().roles().contains("USER"));
+        assertEquals("USER", principal.get().role());
     }
 
     @Test
